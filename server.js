@@ -8,6 +8,7 @@ const bodyParser = require("body-parser");
 const config = require("./src/config");
 const { mountRoutes } = require("./src/routes");
 const { closePool } = require("./src/services/database");
+const { startSummaryWorker } = require("./src/services/summaryWorker");
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.use(bodyParser.json({ limit: config.bodyLimit }));
 app.use(bodyParser.urlencoded({ extended: true, limit: config.bodyLimit }));
 
 mountRoutes(app);
+
+startSummaryWorker();
 
 app.use((_request, response) => {
   response.status(404).json({ ok: false, message: "Not Found" });

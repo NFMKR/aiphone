@@ -38,6 +38,20 @@ const config = {
     batchSize: Number.parseInt(process.env.BAIDU_CB_BATCH_SIZE || "50", 10),
     flushIntervalMs: Number.parseInt(process.env.BAIDU_CB_FLUSH_MS || "200", 10),
   },
+
+  doubaoArk: {
+    baseUrl: process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3",
+    apiKey: process.env.ARK_API_KEY || "",
+    model: process.env.ARK_MODEL || "doubao-seed-2.0-pro",
+    timeoutMs: Number.parseInt(process.env.ARK_TIMEOUT_MS || "20000", 10),
+  },
+
+  summary: {
+    enabled: (process.env.SUMMARY_ENABLED || "false").toLowerCase() === "true",
+    concurrency: Number.parseInt(process.env.SUMMARY_CONCURRENCY || "1", 10),
+    pollIntervalMs: Number.parseInt(process.env.SUMMARY_POLL_MS || "2000", 10),
+    maxRecords: Number.parseInt(process.env.SUMMARY_MAX_RECORDS || "120", 10),
+  },
 };
 
 module.exports = config;
