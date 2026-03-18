@@ -184,13 +184,21 @@ async function generateAndStoreSummary(sessionId) {
 
 async function pickNextPendingSession() {
   const pool = getPool();
+  const retryDelayMs = config.summary.retryDelayMs;
   const [rows] = await pool.query(
     `SELECT f.session_id
      FROM baidu_call_facts f
      LEFT JOIN baidu_call_summaries s ON s.session_id = f.session_id
-     WHERE s.session_id IS NULL OR s.status <> 'success'
+     WHERE
+       s.session_id IS NULL
+       OR s.status = 'pending'
+       OR (
+         s.status = 'failed'
+         AND s.updated_at <= (NOW(3) - INTERVAL ? MICROSECOND)
+       )
      ORDER BY f.received_at DESC
      LIMIT 1`,
+    [retryDelayMs * 1000],
   );
   return rows?.[0]?.session_id || null;
 }

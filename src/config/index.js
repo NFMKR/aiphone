@@ -51,6 +51,7 @@ const config = {
     concurrency: Number.parseInt(process.env.SUMMARY_CONCURRENCY || "1", 10),
     pollIntervalMs: Number.parseInt(process.env.SUMMARY_POLL_MS || "2000", 10),
     maxRecords: Number.parseInt(process.env.SUMMARY_MAX_RECORDS || "120", 10),
+    retryDelayMs: Number.parseInt(process.env.SUMMARY_RETRY_DELAY_MS || "60000", 10),
   },
 };
 
