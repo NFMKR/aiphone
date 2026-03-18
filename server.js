@@ -15,7 +15,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
-app.use(bodyParser.json({ limit: "1mb" }));
+app.use(bodyParser.json({ limit: config.bodyLimit }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 mountRoutes(app);

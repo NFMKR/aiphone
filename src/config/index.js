@@ -18,6 +18,7 @@ function requireEnv(name, fallback = undefined) {
 const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number.parseInt(process.env.PORT || "3000", 10),
+  bodyLimit: process.env.BODY_LIMIT || "10mb",
 
   mysql: {
     host: requireEnv("MYSQL_HOST"),
@@ -30,6 +31,12 @@ const config = {
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+  },
+
+  baiduCallback: {
+    queueMaxSize: Number.parseInt(process.env.BAIDU_CB_QUEUE_MAX || "5000", 10),
+    batchSize: Number.parseInt(process.env.BAIDU_CB_BATCH_SIZE || "50", 10),
+    flushIntervalMs: Number.parseInt(process.env.BAIDU_CB_FLUSH_MS || "200", 10),
   },
 };
 
