@@ -1,7 +1,28 @@
 const { enqueueTaskCall } = require("../services/baiduCallbackQueue");
+const { enqueueIngressLog } = require("../services/baiduIngressLogQueue");
 
 function badRequest(response, msg) {
   return response.status(400).json({ code: 400, msg });
+}
+
+function okSuccess(response, memberId = null) {
+  return response.status(200).json({
+    code: 200,
+    msg: "success",
+    data: memberId ? { memberId } : {},
+  });
+}
+
+function normalizeBody(request) {
+  const body = request.body;
+  if (typeof body === "string") {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return null;
+    }
+  }
+  return body;
 }
 
 function toInt(value) {
@@ -23,20 +44,43 @@ function requiredNumberLike(obj, key) {
   return n;
 }
 
+function tryParseJsonString(value) {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return value;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+}
+
 /**
  * 百度客悦：任务单通电话回调（callbackType=0）
  * 文档：`https://cloud.baidu.com/doc/ky/s/jmfnjplck`
  */
 async function handleTaskCallCallback(request, response) {
-  const body = request.body;
+  const body = normalizeBody(request);
+  enqueueIngressLog({
+    path: request.originalUrl || request.url,
+    contentType: request.headers["content-type"],
+    remoteIp: request.ip,
+    headers: request.headers,
+    body: body ?? request.body,
+    receivedAt: new Date(),
+  });
+
+  // 注意：外部回调高峰期不建议用 4xx 触发重试风暴；这里“解析失败也返回 200”，同时入站日志落库方便排查。
+  if (!body || typeof body !== "object") return okSuccess(response);
+
   const callbackType = requiredNumberLike(body, "callbackType");
   if (callbackType !== 0) {
-    return badRequest(response, "callbackType 必须为 0");
+    return okSuccess(response);
   }
 
-  const data = body?.data;
+  const data = tryParseJsonString(body?.data);
   if (!data || typeof data !== "object") {
-    return badRequest(response, "data 必须为 object");
+    return okSuccess(response);
   }
 
   const sessionId = requiredString(data, "sessionId");
@@ -50,11 +94,11 @@ async function handleTaskCallCallback(request, response) {
   const memberId = requiredNumberLike(data, "memberId");
   const endType = requiredNumberLike(data, "endType");
 
-  if (!sessionId) return badRequest(response, "data.sessionId 必填");
-  if (!tenantId) return badRequest(response, "data.tenantId 必填");
-  if (!taskId) return badRequest(response, "data.taskId 必填");
-  if (!memberId) return badRequest(response, "data.memberId 必填");
-  if (endType === null) return badRequest(response, "data.endType 必填");
+  if (!sessionId) return okSuccess(response);
+  if (!tenantId) return okSuccess(response);
+  if (!taskId) return okSuccess(response);
+  if (!memberId) return okSuccess(response);
+  if (endType === null) return okSuccess(response);
 
   enqueueTaskCall({
     callbackType,
@@ -71,11 +115,7 @@ async function handleTaskCallCallback(request, response) {
     raw: body,
   });
 
-  return response.status(200).json({
-    code: 200,
-    msg: "success",
-    data: { memberId },
-  });
+  return okSuccess(response, memberId);
 }
 
 module.exports = {

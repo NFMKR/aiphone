@@ -15,8 +15,10 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
+// 兼容部分 webhook 使用 text/plain 传 JSON
+app.use(bodyParser.text({ type: ["text/*"], limit: config.bodyLimit }));
 app.use(bodyParser.json({ limit: config.bodyLimit }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true, limit: config.bodyLimit }));
 
 mountRoutes(app);
 
