@@ -74,7 +74,8 @@ async function handleTaskCallCallback(request, response) {
   if (!body || typeof body !== "object") return okSuccess(response);
 
   const callbackType = requiredNumberLike(body, "callbackType");
-  if (callbackType !== 0) {
+  // 文档：0-任务单通电话回调；3-实时呼叫单通电话回调
+  if (callbackType !== 0 && callbackType !== 3) {
     return okSuccess(response);
   }
 
@@ -84,19 +85,21 @@ async function handleTaskCallCallback(request, response) {
   }
 
   const sessionId = requiredString(data, "sessionId");
-  const taskId = requiredString(data, "taskId");
+  const taskId = requiredString(data, "taskId") || "";
   const taskName = requiredString(data, "taskName") || "";
   const robotId = requiredString(data, "robotId") || "";
   const robotName = requiredString(data, "robotName") || "";
   const mobile = requiredString(data, "mobile") || "";
 
-  const tenantId = requiredNumberLike(data, "tenantId");
+  // 有些回调 tenantId 可能出现在根级（body.tenantId），这里做兜底
+  const tenantId = requiredNumberLike(data, "tenantId") ?? requiredNumberLike(body, "tenantId");
   const memberId = requiredNumberLike(data, "memberId");
   const endType = requiredNumberLike(data, "endType");
 
   if (!sessionId) return okSuccess(response);
   if (!tenantId) return okSuccess(response);
-  if (!taskId) return okSuccess(response);
+  // callbackType=0 强依赖 taskId；callbackType=3 可能没有 taskId/taskName
+  if (callbackType === 0 && !taskId) return okSuccess(response);
   if (!memberId) return okSuccess(response);
   if (endType === null) return okSuccess(response);
 
